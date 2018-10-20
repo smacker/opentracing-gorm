@@ -67,9 +67,6 @@ func (c *callbacks) before(scope *gorm.Scope) {
 }
 
 func (c *callbacks) after(scope *gorm.Scope, operation string) {
-	if scope.HasError() {
-		return
-	}
 	val, ok := scope.Get(spanGormKey)
 	if !ok {
 		return
@@ -81,6 +78,8 @@ func (c *callbacks) after(scope *gorm.Scope, operation string) {
 	ext.DBStatement.Set(sp, scope.SQL)
 	sp.SetTag("db.table", scope.TableName())
 	sp.SetTag("db.method", operation)
+	sp.SetTag("db.err", scope.HasError())
+	sp.SetTag("db.count", scope.DB().RowsAffected)
 	sp.Finish()
 }
 
