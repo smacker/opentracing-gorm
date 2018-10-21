@@ -45,3 +45,7 @@ func Handler(ctx context.Context) {
 ```
 
 Call to the `Handler` function would create sql span with table name, sql method and sql statement as a child of handler span.
+
+## License
+
+[MIT](LICENSE)
