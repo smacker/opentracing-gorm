@@ -75,6 +75,7 @@ func (c *callbacks) after(scope *gorm.Scope, operation string) {
 	if operation == "" {
 		operation = strings.ToUpper(strings.Split(scope.SQL, " ")[0])
 	}
+	ext.Error.Set(sp, scope.HasError())
 	ext.DBStatement.Set(sp, scope.SQL)
 	sp.SetTag("db.table", scope.TableName())
 	sp.SetTag("db.method", operation)
