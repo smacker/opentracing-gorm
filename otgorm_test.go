@@ -8,7 +8,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
-	"github.com/smacker/opentracing-gorm"
+	otgorm "github.com/smacker/opentracing-gorm"
 )
 
 var tracer *mocktracer.MockTracer
