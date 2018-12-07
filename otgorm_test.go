@@ -8,7 +8,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
-	"github.com/smacker/opentracing-gorm"
+	otgorm "github.com/smacker/opentracing-gorm"
 )
 
 var tracer *mocktracer.MockTracer
@@ -58,11 +58,13 @@ func TestPool(t *testing.T) {
 		t.Errorf("first span operation should be sql but it's '%s'", sqlSpan.OperationName)
 	}
 
-	expectedTags := map[string]string{
+	expectedTags := map[string]interface{}{
 		"db.table":     "products",
 		"db.method":    "SELECT",
 		"db.type":      "sql",
 		"db.statement": `SELECT * FROM "products"  WHERE "products"."deleted_at" IS NULL AND (("products"."id" = 1)) ORDER BY "products"."id" ASC LIMIT 1`,
+		"db.err":       false,
+		"db.count":     int64(1),
 	}
 
 	sqlTags := sqlSpan.Tags()
