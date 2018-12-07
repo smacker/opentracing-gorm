@@ -6,7 +6,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	otgorm "github.com/smacker/opentracing-gorm"
 )
@@ -59,6 +59,7 @@ func TestPool(t *testing.T) {
 	}
 
 	expectedTags := map[string]interface{}{
+		"error":        false,
 		"db.table":     "products",
 		"db.method":    "SELECT",
 		"db.type":      "sql",
