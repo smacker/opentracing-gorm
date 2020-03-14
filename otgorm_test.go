@@ -54,8 +54,8 @@ func TestPool(t *testing.T) {
 	}
 
 	sqlSpan := spans[0]
-	if sqlSpan.OperationName != "sql" {
-		t.Errorf("first span operation should be sql but it's '%s'", sqlSpan.OperationName)
+	if sqlSpan.OperationName != "sqlite3" {
+		t.Errorf("first span operation should be sqlite3 but it's '%s'", sqlSpan.OperationName)
 	}
 
 	expectedTags := map[string]interface{}{
