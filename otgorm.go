@@ -61,8 +61,10 @@ func (c *callbacks) before(scope *gorm.Scope) {
 	}
 	parentSpan := val.(opentracing.Span)
 	tr := parentSpan.Tracer()
-	sp := tr.StartSpan("sql", opentracing.ChildOf(parentSpan.Context()))
-	ext.DBType.Set(sp, "sql")
+
+	dialect := scope.DB().Dialect().GetName()
+	sp := tr.StartSpan(dialect, opentracing.ChildOf(parentSpan.Context()))
+	ext.DBType.Set(sp, dialect)
 	scope.Set(spanGormKey, sp)
 }
 
@@ -75,8 +77,17 @@ func (c *callbacks) after(scope *gorm.Scope, operation string) {
 	if operation == "" {
 		operation = strings.ToUpper(strings.Split(scope.SQL, " ")[0])
 	}
+
+	query := scope.SQL
+	for i, vars := range scope.SQLVars {
+		params := fmt.Sprintf("$%v", i+1)
+		values := fmt.Sprintf("%v", vars)
+
+		query = strings.ReplaceAll(query, params, values)
+	}
+
 	ext.Error.Set(sp, scope.HasError())
-	ext.DBStatement.Set(sp, scope.SQL)
+	ext.DBStatement.Set(sp, query)
 	sp.SetTag("db.table", scope.TableName())
 	sp.SetTag("db.method", operation)
 	sp.SetTag("db.err", scope.HasError())

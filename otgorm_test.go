@@ -62,7 +62,7 @@ func TestPool(t *testing.T) {
 		"error":        false,
 		"db.table":     "products",
 		"db.method":    "SELECT",
-		"db.type":      "sql",
+		"db.type":      "sqlite3",
 		"db.statement": `SELECT * FROM "products"  WHERE "products"."deleted_at" IS NULL AND (("products"."id" = 1)) ORDER BY "products"."id" ASC LIMIT 1`,
 		"db.err":       false,
 		"db.count":     int64(1),
