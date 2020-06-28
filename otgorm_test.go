@@ -2,33 +2,24 @@ package otgorm_test
 
 import (
 	"context"
+	"log"
 	"testing"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	otgorm "github.com/lhypj/opentracing-gorm"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
-	otgorm "github.com/smacker/opentracing-gorm"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 var tracer *mocktracer.MockTracer
-var gDB *gorm.DB
 
-func init() {
-	gDB = initDB()
-	tracer = mocktracer.New()
-	opentracing.SetGlobalTracer(tracer)
-}
-
-type Product struct {
-	gorm.Model
-	Code string
-}
-
-func initDB() *gorm.DB {
-	db, err := gorm.Open("sqlite3", ":memory:")
+func GetInstance() *gorm.DB {
+	var db *gorm.DB
+	dsn := "root:zxcvbnm123@tcp(localhost:3306)/testdb?parseTime=True&loc=Asia%2FShanghai"
+	db, err := gorm.Open(mysql.New(mysql.Config{DSN: dsn}), &gorm.Config{})
 	if err != nil {
-		panic(err)
+		log.Fatalf("open db: %s", err)
 	}
 	db.AutoMigrate(&Product{})
 	db.Create(&Product{Code: "L1212"})
@@ -36,14 +27,24 @@ func initDB() *gorm.DB {
 	return db
 }
 
+type Product struct {
+	gorm.Model
+	Code string
+}
+
 func Handler(ctx context.Context) {
+	db := GetInstance()
+	tracer = mocktracer.New()
+	opentracing.SetGlobalTracer(tracer)
+
+
 	span, ctx := opentracing.StartSpanFromContext(ctx, "handler")
 	defer span.Finish()
 
-	db := otgorm.SetSpanToGorm(ctx, gDB)
+	db = otgorm.SetSpanToGorm(ctx, db)
 
 	var product Product
-	db.First(&product, 1)
+	db.WithContext(ctx).Where("id = 1").First(&product)
 }
 
 func TestPool(t *testing.T) {
@@ -63,7 +64,7 @@ func TestPool(t *testing.T) {
 		"db.table":     "products",
 		"db.method":    "SELECT",
 		"db.type":      "sql",
-		"db.statement": `SELECT * FROM "products"  WHERE "products"."deleted_at" IS NULL AND (("products"."id" = 1)) ORDER BY "products"."id" ASC LIMIT 1`,
+		"db.statement": "SELECT * FROM `products` WHERE id = 1 AND `products`.`deleted_at` IS NULL ORDER BY `products`.`id` LIMIT 1",
 		"db.err":       false,
 		"db.count":     int64(1),
 	}
@@ -80,7 +81,7 @@ func TestPool(t *testing.T) {
 			continue
 		}
 		if value != expected {
-			t.Errorf("sql span tag '%s' should have value '%s' but it has '%s'", name, expected, value)
+			t.Errorf("sql span tag '%s' should have value '%s' but it has \n'%s'", name, expected, value)
 		}
 	}
 

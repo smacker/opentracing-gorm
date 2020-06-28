@@ -1,11 +1,11 @@
 # opentracing gorm
 
-[OpenTracing](http://opentracing.io/) instrumentation for [GORM](http://gorm.io/).
+[OpenTracing](http://opentracing.io/) instrumentation for [GORM V2](https://github.com/go-gorm/gorm).
 
 ## Install
 
 ```
-go get -u github.com/smacker/opentracing-gorm
+go get -u github.com/lhypj/opentracing-gorm
 ```
 
 ## Usage
@@ -23,7 +23,7 @@ func init() {
 }
 
 func initDB() *gorm.DB {
-    db, err := gorm.Open("sqlite3", ":memory:")
+    instance, err := gorm.Open(mysql.New(mysql.Config{DSN: dsn}), &gorm.Config{})
     if err != nil {
         panic(err)
     }
