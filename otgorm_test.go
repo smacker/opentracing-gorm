@@ -2,20 +2,39 @@ package otgorm_test
 
 import (
 	"context"
+	"log"
+	"sync"
 	"testing"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	otgorm "github.com/lhypj/opentracing-gorm"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
-	otgorm "github.com/smacker/opentracing-gorm"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 var tracer *mocktracer.MockTracer
 var gDB *gorm.DB
 
+var once sync.Once
+
+func GetInstance() *gorm.DB {
+	var db *gorm.DB
+	once.Do(func() {
+		dsn := "root:zxcvbnm123@tcp(localhost:3306)/testdb?parseTime=True&loc=Asia%2FShanghai"
+		db, err := gorm.Open(mysql.New(mysql.Config{DSN: dsn}), &gorm.Config{})
+		if err != nil {
+			log.Fatalf("open db: %s", err)
+		}
+		db.AutoMigrate(&Product{})
+		db.Create(&Product{Code: "L1212"})
+		otgorm.AddGormCallbacks(db)
+	})
+	return db
+}
+
 func init() {
-	gDB = initDB()
+	gDB = GetInstance()
 	tracer = mocktracer.New()
 	opentracing.SetGlobalTracer(tracer)
 }
@@ -23,17 +42,6 @@ func init() {
 type Product struct {
 	gorm.Model
 	Code string
-}
-
-func initDB() *gorm.DB {
-	db, err := gorm.Open("sqlite3", ":memory:")
-	if err != nil {
-		panic(err)
-	}
-	db.AutoMigrate(&Product{})
-	db.Create(&Product{Code: "L1212"})
-	otgorm.AddGormCallbacks(db)
-	return db
 }
 
 func Handler(ctx context.Context) {
