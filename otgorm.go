@@ -2,6 +2,7 @@ package otgorm
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -77,10 +78,15 @@ func (c *callbacks) after(scope *gorm.Scope, operation string) {
 	}
 	ext.Error.Set(sp, scope.HasError())
 	ext.DBStatement.Set(sp, scope.SQL)
+
 	sp.SetTag("db.table", scope.TableName())
 	sp.SetTag("db.method", operation)
 	sp.SetTag("db.err", scope.HasError())
 	sp.SetTag("db.count", scope.DB().RowsAffected)
+
+	b, _ := json.Marshal(scope.SQLVars)
+	sp.SetTag("db.vars", string(b))
+
 	sp.Finish()
 }
 
